@@ -205,6 +205,12 @@ module Net; module SSH; module Connection
     def process(wait=nil, &block)
       return false unless preprocess(&block)
 
+      listeners.each do |io, _|
+        if (io.is_a?(::TCPSocket) && io.inspect.to_s =~ /closed/)
+          listeners.delete(io)
+        end
+      end
+      
       r = listeners.keys
       w = r.select { |w2| w2.respond_to?(:pending_write?) && w2.pending_write? }
       readers, writers, = Net::SSH::Compat.io_select(r, w, nil, io_select_wait(wait))
